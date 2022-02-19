@@ -1,0 +1,19 @@
+#
+# Quarkus
+#
+quarkus:
+  console:
+    color: true
+  datasource:
+    jdbc:
+      url: "jdbc:h2:./h2/test"
+      transactions: xa
+    username: sa
+  log:
+    category:
+      "de.quoss.example.camel.quarkus.xa.fromjms.todb.CustomTransactionHelper":
+        level: info
+      "de.quoss.example.camel.quarkus.xa.fromjms.todb.MainRoute":
+        level: trace
+    level: info
+    min-level: trace

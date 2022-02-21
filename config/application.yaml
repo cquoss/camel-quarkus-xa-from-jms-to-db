@@ -17,3 +17,13 @@ quarkus:
         level: trace
     level: info
     min-level: trace
+
+#
+# Camel
+#
+camel:
+  main:
+    message-history: true
+    tracing: true
+    use-breadcrumb: true
+    use-mdc-logging: true

@@ -5,11 +5,11 @@ import com.arjuna.ats.arjuna.common.CoreEnvironmentBean;
 import com.arjuna.ats.arjuna.common.ObjectStoreEnvironmentBean;
 import com.arjuna.ats.arjuna.common.arjPropertyManager;
 import com.arjuna.ats.jta.TransactionManager;
+import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.apache.activemq.artemis.jms.client.ActiveMQXAConnectionFactory;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.jms.JmsComponent;
 import org.jboss.logging.Logger;
-import org.jboss.narayana.jta.jms.ConnectionFactoryProxy;
 import org.springframework.transaction.jta.JtaTransactionManager;
 
 public class MainRoute extends RouteBuilder {
@@ -24,6 +24,12 @@ public class MainRoute extends RouteBuilder {
 
         // we use all artemis broker defaults here (url, user, password)
         ActiveMQXAConnectionFactory cf = new ActiveMQXAConnectionFactory();
+        // ActiveMQConnectionFactory cf = new ActiveMQConnectionFactory();
+        // FIXME Setting the client id on endpoint level does not work with the xa connection factory.
+        //    Until then it can only be set on the connection factory. When using more than one
+        //    jms durable subscription consumer one will have to set up separate xa connection factories.
+        //    This should be fixed.
+        // cf.setClientID("client-0");
 
         // fetch transaction manager from narayana
         javax.transaction.TransactionManager tm = TransactionManager.transactionManager();
@@ -32,9 +38,6 @@ public class MainRoute extends RouteBuilder {
             dumpNarayanaSettings();
         }
 
-        // configure narayana connection factory proxy
-        ConnectionFactoryProxy cfp = new ConnectionFactoryProxy(cf, new CustomTransactionHelper(tm));
-
         // create spring platform transaction manager
         JtaTransactionManager jtm = new JtaTransactionManager(tm);
 
@@ -42,16 +45,16 @@ public class MainRoute extends RouteBuilder {
         ((JmsComponent) getCamelContext().getComponent("jms")).setTransactionManager(jtm);
 
         // add connection factory to jms component
-        ((JmsComponent) getCamelContext().getComponent("jms")).setConnectionFactory(cfp);
+        ((JmsComponent) getCamelContext().getComponent("jms")).setConnectionFactory(cf);
 
-        from("jms:to-queue?receiveTimeout=30000")
-                .routeId("main-route")
-                // TODO Figure out how to set the id of the from node. When putting the node id right after
-                //   the from node i cannot set a route id any more (it _is_ the route id then). And when i put it
-                //   behind the route id like this it overrides the route id.
-                // .id("from-jms")
-                .to("jdbc:default?resetAutoCommit=false")
-                .id("to-jdbc");
+        from("jms:topic:foo?receiveTimeout=30000&clientId=client-0&durableSubscriptionName=subscription-0")
+            .routeId("main-route-0")
+            // TODO Figure out how to set the id of the from node. When putting the node id right after
+            //   the from node i cannot set a route id any more (it _is_ the route id then). And when i put it
+            //   behind the route id like this it overrides the route id.
+            // .id("from-jms")
+            .to("jdbc:default?resetAutoCommit=false")
+            .id("to-jdbc-0");
 
         LOGGER.tracef("%s end", methodName);
 

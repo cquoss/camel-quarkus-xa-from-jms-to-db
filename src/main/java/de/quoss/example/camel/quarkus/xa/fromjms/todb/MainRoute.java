@@ -32,13 +32,7 @@ public class MainRoute extends RouteBuilder {
         ((JmsComponent) getCamelContext().getComponent("jms")).setConnectionFactory(new ActiveMQXAConnectionFactory());
 
         from("jms:topic:foo?receiveTimeout=30000&clientId=client-0&durableSubscriptionName=subscription-0")
-            .routeId("main-route-0")
-            // TODO Figure out how to set the id of the from node. When putting the node id right after
-            //   the from node i cannot set a route id any more (it _is_ the route id then). And when i put it
-            //   behind the route id like this it overrides the route id.
-            // .id("from-jms")
-            .to("jdbc:default?resetAutoCommit=false")
-            .id("to-jdbc-0");
+            .to("jdbc:default?resetAutoCommit=false");
 
     }
 

@@ -36,7 +36,7 @@ public class MainRoute extends RouteBuilder {
         // add connection factory to jms component
         ((JmsComponent) getCamelContext().getComponent("jms")).setConnectionFactory(new ActiveMQXAConnectionFactory());
 
-        from("jms:topic:foo?clientId=client-0&durableSubscriptionName=subscription-0")
+        from("jms:foo::subscription-0?subscriptionDurable=true")
             .to("jdbc:default?resetAutoCommit=false");
 
         LOGGER.info("Main route configured.");
